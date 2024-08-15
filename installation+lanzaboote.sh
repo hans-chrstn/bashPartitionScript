@@ -110,11 +110,24 @@ main() {
   fi
 
   echo "Checking root permissions..."
-  if [[ $EUID == 0 ]]; then
+  if [[ $EUID -eq 0 ]]; then
   	printf "$USER is root.\nProceeding..\n"
   else
   	printf "$USER is not root.\nPlease try again as root user\n"
 	  exit 1
+  fi
+
+  echo "Checking secureboot keys in current directory..."
+  if [[ -d "./secureboot" ]]; then
+    printf "./secureboot folder exist!\nProceeding...\n"
+    mkdir -p /mnt/etc/
+    sudo cp -r ./secureboot /mnt/etc/
+    sudo chown -R root:root /mnt/etc/secureboot/
+    sudo chmod -R 755 /mnt/etc/secureboot
+    printf "Keys have been moved to /mnt/etc/secureboot\n"
+  else
+    printf './secureboot does not exist! \nMake sure you have lanzaboote installed and have the generated "sudo sbctl create-keys" in the current folder! \nExiting..\n'
+    exit 1
   fi
 
   lsblk
