@@ -110,11 +110,35 @@ main() {
   fi
 
   echo "Checking root permissions..."
-  if [[ $EUID == 0 ]]; then
+  if [[ $EUID -eq 0 ]]; then
   	printf "$USER is root.\nProceeding..\n"
   else
   	printf "$USER is not root.\nPlease try again as root user\n"
 	  exit 1
+  fi
+
+  echo "Checking secureboot keys in current directory..."
+  if [[ -d "./secureboot" ]]; then
+    printf "./secureboot folder exist!\nProceeding...\n"
+    mkdir -p /mnt/etc/
+    sudo cp -r ./secureboot /mnt/etc/
+    sudo chown -R root:root /mnt/etc/secureboot/
+    sudo chmod -R 755 /mnt/etc/secureboot
+    printf "Keys have been moved to /mnt/etc/secureboot\n"
+  else
+    printf "./secureboot does not exist!\nSkipping..."
+  fi
+
+  echo "Checking .ssh/ in current directory..."
+  if [[ -d "./.ssh" ]]; then
+    printf ".ssh/ folder exists!\nProceeding...\n"
+    read -p "Enter home directory name: " homeuser
+    mkdir -p /mnt/home/"$homeuser"
+    sudo cp -r ./.ssh /mnt/home/"$homeuser"
+    sudo chown -R root:root /mnt/home/"$homeuser"/.ssh/
+    sudo chmod -R 755 /mnt/home/"$homeuser"/.ssh/
+  else
+    printf "\n.ssh/ folder does not exist!\nSkipping...\n"
   fi
 
   lsblk
@@ -190,9 +214,9 @@ main() {
   while true; do
     if [[ $fsys == "ext4" ]]; then
       swapSizeHandler ext4Swap ext4DefaultSwap
-      mkfs.ext4 -L nixos /dev/sda1
-      mkswap -L swap /dev/sda3
-			swapon /dev/sda3
+      mkfs.ext4 -L nixos /dev/"$devrootpart"
+      mkswap -L swap /dev/"$device"3
+			swapon /dev/"$device"3
       mount /dev/disk/by-label/nixos /mnt
       break
     elif [[ $fsys == "btrfs" ]]; then
